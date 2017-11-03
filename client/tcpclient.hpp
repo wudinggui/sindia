@@ -5,13 +5,14 @@
 #include <thread>
 #include <functional>
 #include <boost/asio.hpp>
-#include "connection.hpp"
+#include "common/connection.hpp"
 
 using namespace std;
 using namespace boost::asio;
 
 namespace rpc 
 {
+class Connection;
 class TcpClient
 {
 public:

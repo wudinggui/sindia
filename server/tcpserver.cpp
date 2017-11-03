@@ -1,7 +1,7 @@
 
 #include <boost/thread/thread.hpp>
-#include "message.hpp"
-#include "connection.hpp"
+#include "common/message.hpp"
+#include "common/connection.hpp"
 #include "tcpserver.hpp"
 
 namespace rpc {
