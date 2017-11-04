@@ -23,11 +23,12 @@ public:
 	void Stop();
 
 private:
-	void Run();
+
 	void Accept();
 	void CloseConn(Connection_ptr conn);
 
     io_service 								m_service;
+	io_service::work                        m_work;
     ip::tcp::socket   						m_socket;
     ip::tcp::endpoint   					m_endpoint;
     ip::tcp::acceptor 						m_acceptor;

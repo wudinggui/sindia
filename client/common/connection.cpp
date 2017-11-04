@@ -1,5 +1,9 @@
+#include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 #include "connection.hpp"
+#include "spdlog/spdlog.h"
+
+using namespace boost::asio;
 
 namespace rpc
 {
@@ -15,6 +19,8 @@ void Connection::SetCloseCallback(const CloseCallback& cb)
 
 void Connection::Close()
 {
+	spdlog::get("console")->info("connection close");
+
 	boost::system::error_code error;
 	//m_socket.shutdown(tcp::socket::shutdown_both, error);
 	m_socket.close(error);
@@ -32,34 +38,36 @@ ip::tcp::socket& Connection::Socket()
 std::string Connection::GetPeerAddress()
 {
     std::string peerip;
-    std::string peerport;
 	std::string peeraddr;
 
     assert(m_socket.is_open());
-	std::stringstream ss;
-    ss << m_socket.remote_endpoint().port();
-    ss >> peerport;
-    ss << m_socket.remote_endpoint().address().to_string();
-    ss >> peerip;
 
-    peeraddr = peerip + ":" + peerport;
+    peerip = m_socket.remote_endpoint().address().to_string();
+    peeraddr = peerip + ":" 
+		     + boost::lexical_cast<std::string>(m_socket.remote_endpoint().port());
+	
+	spdlog::get("console")->info("connection get peeraddr %s", peeraddr.c_str());
+		
 	return peeraddr;
 }
 
 void Connection::Start()
 {
+	spdlog::get("console")->info("connection get start");
 	ReadHead();
 }
 
 void Connection::Stop()
 {
+	spdlog::get("console")->info("connection get stop");
 	Close();
 }
 
-void Connection::OnReadHead(boost::system::error_code const& error)
+void Connection::OnReadHead(const boost::system::error_code& error)
 {
 	if (!error)
 	{
+		spdlog::get("console")->info("connection on read msg header");
 		if (!m_readmsg.decode_msg())
 		{
 			ReadHead();
@@ -71,77 +79,89 @@ void Connection::OnReadHead(boost::system::error_code const& error)
 	}
 	else
 	{
+	    spdlog::get("console")->info("connection on read msg header error");
 		OnError(error);
 	}
 }
 
-void Connection::OnReadBody(boost::system::error_code const& error)
+void Connection::OnReadBody(const boost::system::error_code& error)
 {
 	auto self = this->shared_from_this();
 	if (!error)
 	{
+	    //spdlog::get("console")->info("connection on read msg body");
 	    //todo callback here, like cb(self, m_readmsg);
 		ReadHead();
 	}
 	else
 	{
+	    spdlog::get("console")->info("connection on read msg body error");
 		OnError(error);
 	}
 }
 
-void Connection::OnError(boost::system::error_code const& error)
+void Connection::OnError(const boost::system::error_code& error)
 {
 	if (!error)
 	{
         return;
 	}
 
+	spdlog::get("console")->info("connection on error");
+
 	Close();
 }
 
 void Connection::ReadHead()
 {
-	boost::system::error_code  error;
 	auto self = this->shared_from_this();
+
+	spdlog::get("console")->info("connection start async read head");
 
 	async_read(m_socket,
 		      boost::asio::buffer(m_readmsg.data(), m_readmsg.headerlen()),
-		      boost::bind(&Connection::OnReadHead, self, error));
+		      boost::bind(&Connection::OnReadHead, self, boost::asio::placeholders::error));
 }
 
 void Connection::ReadBody()
 {
-	boost::system::error_code  error;
 	auto self = this->shared_from_this();
+
+	//spdlog::get("console")->info("connection start async read body");
 
 	async_read(m_socket,
 		       boost::asio::buffer(m_readmsg.body(), m_readmsg.bodylen()),
-		       boost::bind(&Connection::OnReadBody, self, error));
+		       boost::bind(&Connection::OnReadBody, self, boost::asio::placeholders::error));
 }
 
 void Connection::Write(Message& msg)
 {
-	boost::system::error_code  error;
 	std::unique_lock<std::mutex> lock(m_mutex);
 
 	if (m_sendmsgqueue.empty())
 	{
+		spdlog::get("console")->info("connection start async write at once");
+
 		async_write(m_socket,
 			        boost::asio::buffer(msg.data(), msg.length()),
-			        boost::bind(&Connection::OnWrite, this, error));
+			        boost::bind(&Connection::OnWrite, this, boost::asio::placeholders::error));
 	}
 	else
 	{
+		spdlog::get("console")->info("connection start async write later");
+
 		m_sendmsgqueue.emplace_back(msg);
 	}
 }
 
-void Connection::OnWrite(boost::system::error_code const& error)
+void Connection::OnWrite(const boost::system::error_code& error)
 {
 	if (!error)
 	{
 		if (!m_sendmsgqueue.empty())
 		{
+			spdlog::get("console")->info("connection on write and write pending write msg");
+
             auto msg = m_sendmsgqueue.front();
 			m_sendmsgqueue.pop_front();
 			async_write(m_socket,
@@ -154,6 +174,7 @@ void Connection::OnWrite(boost::system::error_code const& error)
 		OnError(error);
 		if (!m_sendmsgqueue.empty())
 	    {
+	        spdlog::get("console")->info("connection on write error and clear pending msg");
             m_sendmsgqueue.clear();
 	    }
 	}

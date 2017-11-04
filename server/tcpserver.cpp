@@ -3,30 +3,34 @@
 #include "common/message.hpp"
 #include "common/connection.hpp"
 #include "tcpserver.hpp"
+#include "spdlog/spdlog.h"
 
 namespace rpc {
 
 TcpServer::TcpServer(const std::string& ipaddr, uint32_t port)
-	: m_socket(m_service)
+	: m_work(m_service) 
+	, m_socket(m_service)
 	, m_endpoint(ip::address::from_string(ipaddr), port)
 	, m_acceptor(m_service, m_endpoint)
 
 {
 }
 
-void TcpServer::Run()
-{
-	m_service.run();
-}
-
 void TcpServer::Start()
 {
+	spdlog::get("console")->info("server gets start");
+
     Accept();
-	m_runthread.reset(new std::thread(std::bind(&TcpServer::Run, this)));
+	m_runthread.reset(new std::thread([this]
+    { 
+        m_service.run(); 
+    }));
 }
 
 void TcpServer::Stop()
 {
+	spdlog::get("console")->info("server stop");
+
 	m_acceptor.close();
     m_service.stop();
 
@@ -52,6 +56,7 @@ void TcpServer::Accept()
 	{
 		if (!error)
 		{
+		    spdlog::get("console")->info("server accept new connection");
 			std::string peeraddr = new_connection->GetPeerAddress();
             m_connmap[peeraddr] = new_connection;
 			new_connection->SetCloseCallback(std::bind(&TcpServer::CloseConn, this, std::placeholders::_1));
@@ -59,7 +64,7 @@ void TcpServer::Accept()
 		}
 		else
 		{
-			// TODO log error
+			spdlog::get("console")->info("server accept new connection error");
 		}
 
 		Accept();
@@ -68,6 +73,8 @@ void TcpServer::Accept()
 
 void TcpServer::CloseConn(Connection_ptr conn)
 {
+	spdlog::get("console")->info("server close connection");
+
 	std::unique_lock<std::mutex> lock(m_mutex);
 	for (auto itr = m_connmap.begin(); itr != m_connmap.end(); ++itr)
 	{

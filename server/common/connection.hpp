@@ -40,10 +40,10 @@ public:
 private:
 	void ReadHead();
 	void ReadBody();
-    void OnWrite(boost::system::error_code const& error);
-	void OnError(boost::system::error_code const& error);
-	void OnReadHead(boost::system::error_code const& error);
-	void OnReadBody(boost::system::error_code const& error);
+    void OnWrite(const boost::system::error_code& error);
+	void OnError(const boost::system::error_code& error);
+	void OnReadHead(const boost::system::error_code& error);
+	void OnReadBody(const boost::system::error_code& error);
 
 	ip::tcp::socket						    m_socket;
 	std::string                             m_peeraddr;

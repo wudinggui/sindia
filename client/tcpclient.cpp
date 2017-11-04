@@ -19,17 +19,15 @@ TcpClient::TcpClient(const std::string& ipaddr, uint32_t port)
 {
 }
 
-void TcpClient::Run()
-{
-	spdlog::get("console")->info("client runs");
-	m_service.run();
-}
-
 void TcpClient::Start()
 {
 	spdlog::get("console")->info("client gets start");
-	m_runthread.reset(new std::thread(std::bind(&TcpClient::Run, this)));
 	StartConnect();
+
+	m_runthread.reset(new std::thread([this]
+    {   
+        m_service.run();
+    }));
 }
 
 ip::tcp::socket& TcpClient::Socket()
@@ -44,9 +42,8 @@ ip::tcp::endpoint const& TcpClient::Endpoint() const
 
 void TcpClient::StartConnect()
 {
-	spdlog::get("console")->info("client try to connect");
-    boost::system::error_code error;
-	m_socket.async_connect(m_endpoint, std::bind(&TcpClient::HandleConnection, this, error));
+	spdlog::get("console")->info("client start to connect");
+	m_socket.async_connect(m_endpoint, std::bind(&TcpClient::HandleConnection, this, std::placeholders::_1));
 }
 
 void TcpClient::CheckConnect()
@@ -87,13 +84,13 @@ void TcpClient::HandleConnection(const boost::system::error_code& error)
 	}
 	else
 	{
-        spdlog::get("console")->info("client on connect error");
+        spdlog::get("console")->info("client on connect error, %s", (error.message()).c_str());
 
 		if (m_onerror)
 	    {
 			m_onerror();
 	    }
-
+		
 		CheckConnect();
 	}
 }
@@ -104,6 +101,7 @@ void TcpClient::CloseConn(Connection_ptr conn)
 
     if (!conn)
     {
+        spdlog::get("console")->info("connection has close");
         return;
     }
 	
