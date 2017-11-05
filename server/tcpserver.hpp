@@ -16,25 +16,25 @@ class Connection;
 class TcpServer
 {
 public:
-	TcpServer(const std::string& ipaddr, uint32_t port);
-	~TcpServer(){};
+    TcpServer(const std::string& ipaddr, uint32_t port);
+    ~TcpServer(){};
 
-	void Start();
-	void Stop();
+    void Start();
+    void Stop();
 
 private:
 
-	void Accept();
-	void CloseConn(Connection_ptr conn);
+    void Accept();
+    void CloseConn(Connection_ptr conn);
 
-    io_service 								m_service;
-	io_service::work                        m_work;
-    ip::tcp::socket   						m_socket;
-    ip::tcp::endpoint   					m_endpoint;
-    ip::tcp::acceptor 						m_acceptor;
+    io_service                                 m_service;
+    io_service::work                        m_work;
+    ip::tcp::socket                           m_socket;
+    ip::tcp::endpoint                       m_endpoint;
+    ip::tcp::acceptor                         m_acceptor;
     std::map<std::string, Connection_weak>  m_connmap;
-	std::shared_ptr<std::thread>            m_runthread;
-	mutable std::mutex			            m_mutex;
+    std::shared_ptr<std::thread>            m_runthread;
+    mutable std::mutex                        m_mutex;
 };
 }
 #endif /// TCP_SERVER_H__

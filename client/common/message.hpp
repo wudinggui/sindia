@@ -15,38 +15,38 @@ enum MSGTYPE {REQUEST = 1, RESPONSE, NOTIFY};
 
 struct Header
 {
-	uint32_t 	    type;
-	uint32_t		length;
-	uint32_t		id;
-	size_t		    hash;
-	uint32_t        error;
-	uint32_t        reverse[3];
+    uint32_t         type;
+    uint32_t        length;
+    uint32_t        id;
+    size_t            hash;
+    uint32_t        error;
+    uint32_t        reverse[3];
     Header()
-	{
-		type = 0;
-		length = 0;
-		id = 0;
-		hash = 0;
-		error = 0;
-	};
+    {
+        type = 0;
+        length = 0;
+        id = 0;
+        hash = 0;
+        error = 0;
+    };
 
     Header(uint32_t settype, uint32_t setlength, uint32_t setid, size_t hash)
-	{
-		type = settype;
-		length = setlength;
-		id = setid;
-		hash = hash;
-		error = 0;
-	};
+    {
+        type = settype;
+        length = setlength;
+        id = setid;
+        hash = hash;
+        error = 0;
+    };
 
     Header(const Header& other)
-	{
-		type = other.type;
-		length = other.length;
-		id = other.id;
-		hash = other.hash;
-		error = other.error;
-	};
+    {
+        type = other.type;
+        length = other.length;
+        id = other.id;
+        hash = other.hash;
+        error = other.error;
+    };
 
 };
 
@@ -57,11 +57,11 @@ public:
         m_header_length = (sizeof(m_header));
         m_max_body_length = (MAXDATALEN - m_header_length);
     }
-	
-	Message(Header& header, char *data, size_t len)
+    
+    Message(Header& header, char *data, size_t len)
     {
-	    m_max_body_length = (MAXDATALEN - m_header_length);
-	    m_header_length = (sizeof(m_header));
+        m_max_body_length = (MAXDATALEN - m_header_length);
+        m_header_length = (sizeof(m_header));
         m_body_length = len;
         m_header = header;
         (void)std::memcpy(m_data, reinterpret_cast<char*>(&m_header), sizeof(m_header));
@@ -72,7 +72,7 @@ public:
     {
         return m_data;
     }
-	
+    
     size_t length() const
     {
         return m_header_length + m_body_length;
@@ -110,7 +110,7 @@ public:
         m_header = header;
         (void)std::memcpy(m_data, reinterpret_cast<char*>(&m_header), sizeof(m_header));
         (void)std::memcpy(m_data + sizeof(m_header), data, len);
-		return true;
+        return true;
     }
 
     bool decode_msg()
@@ -124,7 +124,7 @@ public:
         m_header_length = (sizeof(m_header));
         m_body_length = m_header.length;
 
-		return true;
+        return true;
     }
 
     size_t hash()
@@ -132,31 +132,31 @@ public:
         return m_header.hash;
     }
 
-	size_t type()
-	{
-		return m_header.type;
-	}
+    size_t type()
+    {
+        return m_header.type;
+    }
 
-	void settype(MSGTYPE type)
-	{
-		m_header.type = type;
-	}
+    void settype(MSGTYPE type)
+    {
+        m_header.type = type;
+    }
 
-	size_t id()
-	{
-		return m_header.id;
-	}
+    size_t id()
+    {
+        return m_header.id;
+    }
 
-	size_t error()
-	{
-		return m_header.error;
-	}
+    size_t error()
+    {
+        return m_header.error;
+    }
 
 private:
-	size_t         m_max_body_length;
-	size_t         m_header_length;
+    size_t         m_max_body_length;
+    size_t         m_header_length;
     size_t         m_body_length;
-	Header         m_header;
+    Header         m_header;
     char           m_data[MAXDATALEN];
 };
 }

@@ -26,31 +26,31 @@ using CloseCallback = std::function<void (const Connection_ptr&)>;
 class Connection : public std::enable_shared_from_this<Connection>
 {
 public:
-	Connection(io_service& ios);
-	~Connection(){};
+    Connection(io_service& ios);
+    ~Connection(){};
 
     void Start();
-	void Stop();
-	void Write(Message& msg);
+    void Stop();
+    void Write(Message& msg);
     ip::tcp::socket& Socket();
-	std::string GetPeerAddress();
-	void Close();
-	void SetCloseCallback(const CloseCallback& cb);
+    std::string GetPeerAddress();
+    void Close();
+    void SetCloseCallback(const CloseCallback& cb);
 
 private:
-	void ReadHead();
-	void ReadBody();
+    void ReadHead();
+    void ReadBody();
     void OnWrite(const boost::system::error_code& error);
-	void OnError(const boost::system::error_code& error);
-	void OnReadHead(const boost::system::error_code& error);
-	void OnReadBody(const boost::system::error_code& error);
+    void OnError(const boost::system::error_code& error);
+    void OnReadHead(const boost::system::error_code& error);
+    void OnReadBody(const boost::system::error_code& error);
 
-	ip::tcp::socket						    m_socket;
-	std::string                             m_peeraddr;
+    ip::tcp::socket                            m_socket;
+    std::string                             m_peeraddr;
     Message                                 m_readmsg;
-	mutable std::mutex                      m_mutex;
-	std::list<Message>                      m_sendmsgqueue;
-	CloseCallback                           m_closecb;
+    mutable std::mutex                      m_mutex;
+    std::list<Message>                      m_sendmsgqueue;
+    CloseCallback                           m_closecb;
 };
 }
 
