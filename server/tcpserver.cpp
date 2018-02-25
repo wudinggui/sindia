@@ -2,6 +2,7 @@
 #include <boost/thread/thread.hpp>
 #include "common/message.hpp"
 #include "common/connection.hpp"
+#include "common/dispatcher.hpp"
 #include "tcpserver.hpp"
 #include "spdlog/spdlog.h"
 
@@ -17,10 +18,19 @@ TcpServer::TcpServer(const std::string& ipaddr, uint32_t port)
 
 void TcpServer::Start()
 {
+    //test case
+	SingleDispatch::GetInstance()->reghandler("hello", [](std::string req)
+	{
+		std::cout << "this hander recieve " << req << std::endl;
+		return std::string("hello client");
+	});
+    //test case end
+    
 	spdlog::get("console")->info("server gets start");
 	m_acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
 	m_acceptor.listen();
     Accept();
+
 	m_runthread.reset(new std::thread([this]
     { 
         m_service.run(); 

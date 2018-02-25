@@ -5,11 +5,11 @@
 
 namespace sindia 
 {
-void Dispatcher::reghandler(std::string& name,  Handler_t& handler)
+void Dispatcher::reghandler(std::string name, const Handler_t& handler)
 {
-	spdlog::get("console")->info("dispatcher reg handle %s", name.c_str());
-    size_t hash = std::hash<std::string>{}(name);
+    uint32_t hash = std::hash<std::string>{}(name);
 	m_callmap.emplace(hash, handler);
+	spdlog::get("console")->info("dispatcher reg handle %s, hast %u", name.c_str(), hash);
 }
 
 void Dispatcher::handle(Message& msg, std::string& res)
@@ -31,7 +31,7 @@ void Dispatcher::handle(Message& msg, std::string& res)
 	}
 	
 	std::string req(msg.data(), msg.data_length());
-	handler(req, res);
+	res = handler(req);
 }
 
 void Dispatcher::dispatch(Connection_ptr conn, Message& msg)

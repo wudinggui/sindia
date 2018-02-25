@@ -7,6 +7,7 @@
 #define BOOST_ASIO_ENABLE_HANDLER_TRACKING
 #include <boost/asio.hpp>
 #include "common/connection.hpp"
+#include "common/dispatcher.hpp"
 
 using namespace std;
 using namespace boost::asio;
@@ -24,7 +25,6 @@ public:
 	void Stop();
 
 private:
-
 	void Accept();
 	void CloseConn(Connection_ptr conn);
 

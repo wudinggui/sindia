@@ -11,6 +11,7 @@
 #include <boost/asio.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include "message.hpp"
+#include "itypedef.hpp"
 
 using namespace std;
 using namespace boost::asio;
@@ -18,11 +19,6 @@ using namespace boost::asio;
 
 namespace sindia
 {
-class Connection;
-using Connection_weak = std::weak_ptr<Connection>;
-using Connection_ptr = std::shared_ptr<Connection>;
-using CloseCallback = std::function<void (const Connection_ptr&)>;
-
 class Connection : public std::enable_shared_from_this<Connection>
 {
 public:

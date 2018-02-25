@@ -78,14 +78,16 @@ void TcpClient::HandleConnection(const boost::system::error_code& error)
 		m_isconnected = true;
 		m_connection->Start();
 
+		//test case
         char data[] = "hello server";
 		Message msg(data, sizeof(data));
 		msg.set_type(Message::NOTIFY);
 		msg.set_id(0);
-		msg.set_hash(0);
+		msg.set_hash(std::hash<std::string>{}("hello"));
 		msg.set_errcode(0);
-		spdlog::get("console")->info("message info type(%u), length(%u), id(%u), hash(%u), error(%u), context %s",
-			msg.get_type(), msg.data_length(),msg.get_id(),msg.get_hash(),msg.get_errcode(), msg.buffer());
+		spdlog::get("console")->info("message info type(%u), length(%u), id(%u), hash(%u), error(%u)",
+			msg.get_type(), msg.data_length(),msg.get_id(),msg.get_hash(),msg.get_errcode());
+		//test case end
 
 		m_connection->Write(msg);
 	}

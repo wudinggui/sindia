@@ -1,5 +1,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
+#include "common/dispatcher.hpp"
 #include "connection.hpp"
 #include "spdlog/spdlog.h"
 
@@ -104,6 +105,7 @@ void Connection::OnReadBody(const boost::system::error_code& error)
 	{
 	    spdlog::get("console")->info("connection on read msg body: \" %s \"", m_message.data());
 	    //todo callback here, like cb(self, m_readmsg);
+	    SingleDispatch::GetInstance()->dispatch(shared_from_this(), m_message);
 		ReadHead();
 	}
 	else
