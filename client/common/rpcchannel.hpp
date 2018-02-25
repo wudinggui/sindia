@@ -9,7 +9,7 @@
 #include "message.hpp"
 #include "connection.hpp"
 
-namespace rpc 
+namespace sindia 
 {
 static const uint32_t DEFAULTTIMEOUT = 1000u; //1000ms
 

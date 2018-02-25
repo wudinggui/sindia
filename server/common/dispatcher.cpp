@@ -3,7 +3,7 @@
 #include "rpcchannel.hpp"
 #include "spdlog/spdlog.h"
 
-namespace rpc 
+namespace sindia 
 {
 void Dispatcher::reghandler(std::string& name,  Handler_t& handler)
 {
@@ -14,9 +14,9 @@ void Dispatcher::reghandler(std::string& name,  Handler_t& handler)
 
 void Dispatcher::handle(Message& msg, std::string& res)
 {
-	spdlog::get("console")->info("dispatcher get handle hash id %d", msg.hash());
+	spdlog::get("console")->info("dispatcher get handle hash id %d", msg.get_hash());
 
-	auto itr = m_callmap.find(msg.hash());
+	auto itr = m_callmap.find(msg.get_hash());
 	if (itr == m_callmap.end())
 	{
 	    spdlog::get("console")->info("dispatcher get handle fail");
@@ -30,35 +30,37 @@ void Dispatcher::handle(Message& msg, std::string& res)
 		return;
 	}
 	
-	std::string req(msg.body(), msg.bodylen());
+	std::string req(msg.data(), msg.data_length());
 	handler(req, res);
 }
 
 void Dispatcher::dispatch(Connection_ptr conn, Message& msg)
 {
-    if (msg.type() == Message::RESPONSE)
+    if (msg.get_type() == Message::RESPONSE)
 	{
 		spdlog::get("console")->info("dispatch response msg");
 
 	    rpcchnl.SetResponse(msg);    
 	}
-    else if(msg.type() == Message::REQUEST)
+    else if(msg.get_type() == Message::REQUEST)
     {
 		spdlog::get("console")->info("dispatch resquest msg");
 
         std::string res;
         handle(msg, res);
 		
-        Message::Header newhead(msg.header());
-		newhead.type = Message::RESPONSE;
-		newhead.length = res.size();
-        msg.encode_msg(newhead, (char*)res.c_str(), res.size());
+		Message resp(res.c_str(), res.size());
+		resp.set_type(Message::RESPONSE);
+		resp.set_hash(msg.get_hash());
+		resp.set_id(msg.get_id());
+		resp.set_errcode(0);
+		
 		if (conn)
 		{
-		    conn->Write(msg);
+		    conn->Write(resp);
 		}
     }
-	else if(msg.type() == Message::NOTIFY)
+	else if(msg.get_type() == Message::NOTIFY)
 	{
 		spdlog::get("console")->info("dispatch notify msg");
 

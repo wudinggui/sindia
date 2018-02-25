@@ -1,7 +1,7 @@
 #include "rpcchannel.hpp"
 #include "spdlog/spdlog.h"
 
-namespace rpc 
+namespace sindia 
 {
 
 Rpcchannel::Rpcchannel()
@@ -25,14 +25,15 @@ int32_t Rpcchannel::Call(std::string& name,  std::string& req, std::string& res)
 	
 	spdlog::get("console")->info("call function %s", name.c_str());
 
-	uint32_t id = m_callid++;
-	size_t hash = std::hash<std::string>{}(name);
-	uint32_t setlength = req.size();
-	Message::Header  head(Message::REQUEST, setlength, id, hash);
-	Message  msg(head, (char*)req.c_str(), req.size());
+	Message  msg(req.c_str(), req.size());
+	msg.set_type(Message::REQUEST);
+	msg.set_id(++m_callid);
+	msg.set_hash(std::hash<std::string>{}(name));
+	msg.set_errcode(0);
+
     m_conn->Write(msg);
 
-    return GetResponse(id, res);
+    return GetResponse(m_callid, res);
 }
 
 int32_t Rpcchannel::GetResponse(uint32_t callid, std::string& res)
@@ -68,16 +69,16 @@ void Rpcchannel::SetTimeout(uint32_t time)
 
 void Rpcchannel::SetResponse(Message& msg)
 {
-    auto itr = m_prommap.find(msg.id());
+    auto itr = m_prommap.find(msg.get_id());
 	if (itr == m_prommap.end())
 	{
-	    spdlog::get("console")->info("set response msg fail, id %u", msg.id());
+	    spdlog::get("console")->info("set response msg fail, id %u", msg.get_id());
 	    return;
 	}
 
 	auto& prom = itr->second;
 
-	prom.set_value(std::string(msg.body(), msg.bodylen()));
+	prom.set_value(std::string(msg.data(), msg.data_length()));
 }
 
 }

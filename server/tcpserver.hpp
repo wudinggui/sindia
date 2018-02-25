@@ -4,13 +4,14 @@
 #include <string>
 #include <thread>
 #include <functional>
+#define BOOST_ASIO_ENABLE_HANDLER_TRACKING
 #include <boost/asio.hpp>
 #include "common/connection.hpp"
 
 using namespace std;
 using namespace boost::asio;
 
-namespace rpc
+namespace sindia
 {
 class Connection;
 class TcpServer
@@ -29,12 +30,11 @@ private:
 
     io_service 								m_service;
 	io_service::work                        m_work;
-    ip::tcp::socket   						m_socket;
     ip::tcp::endpoint   					m_endpoint;
     ip::tcp::acceptor 						m_acceptor;
-    std::map<std::string, Connection_weak>  m_connmap;
 	std::shared_ptr<std::thread>            m_runthread;
-	mutable std::mutex			            m_mutex;
+	std::mutex			                    m_mutex;
+    std::unordered_map<std::string, Connection_weak>  m_connmap;	
 };
 }
 #endif /// TCP_SERVER_H__

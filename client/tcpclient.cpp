@@ -7,12 +7,11 @@
 using namespace std;
 using namespace boost::asio;
 
-namespace rpc 
+namespace sindia 
 {
 TcpClient::TcpClient(const std::string& ipaddr, uint32_t port)
 	: m_service()
 	, m_work(m_service)
-	, m_socket(m_service)
 	, m_endpoint(ip::address::from_string(ipaddr), port)
 	, m_isconnected(false)
 {
@@ -29,20 +28,12 @@ void TcpClient::Start()
     }));
 }
 
-ip::tcp::socket& TcpClient::Socket()
-{
-	return m_socket;
-}
-
-ip::tcp::endpoint const& TcpClient::Endpoint() const
-{
-	return m_endpoint;
-}
-
 void TcpClient::StartConnect()
 {
 	spdlog::get("console")->info("client start to connect");
-	m_socket.async_connect(m_endpoint, std::bind(&TcpClient::HandleConnection, this, std::placeholders::_1));
+    m_connection.reset(new Connection(m_service));
+	m_connection->SetCloseCallback(std::bind(&TcpClient::CloseConn, this, std::placeholders::_1));
+	m_connection->Socket().async_connect(m_endpoint, std::bind(&TcpClient::HandleConnection, this, std::placeholders::_1));
 }
 
 void TcpClient::CheckConnect()
@@ -69,7 +60,7 @@ void TcpClient::CheckConnect()
 void TcpClient::HandleConnection(const boost::system::error_code& error)
 {
 	spdlog::get("console")->info("client handle connect");
-	if (!m_socket.is_open())
+	if (!m_connection->Socket().is_open())
     {
         spdlog::get("console")->info("connect failed, socket not open!");
 		return;
@@ -85,13 +76,17 @@ void TcpClient::HandleConnection(const boost::system::error_code& error)
 			m_onconnect();
 		}
 		m_isconnected = true;
-		m_connection = std::make_shared<Connection>(std::move(m_socket));
-		m_connection->SetCloseCallback(std::bind(&TcpClient::CloseConn, this, std::placeholders::_1));
 		m_connection->Start();
 
         char data[] = "hello server";
-		Message::Header header(1u, 1u, 1u, 1u);
-		Message msg(header, data, sizeof(data));
+		Message msg(data, sizeof(data));
+		msg.set_type(Message::NOTIFY);
+		msg.set_id(0);
+		msg.set_hash(0);
+		msg.set_errcode(0);
+		spdlog::get("console")->info("message info type(%u), length(%u), id(%u), hash(%u), error(%u), context %s",
+			msg.get_type(), msg.data_length(),msg.get_id(),msg.get_hash(),msg.get_errcode(), msg.buffer());
+
 		m_connection->Write(msg);
 	}
 	else

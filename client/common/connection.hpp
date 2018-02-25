@@ -16,7 +16,7 @@ using namespace std;
 using namespace boost::asio;
 
 
-namespace rpc
+namespace sindia
 {
 class Connection;
 using Connection_weak = std::weak_ptr<Connection>;
@@ -26,8 +26,8 @@ using CloseCallback = std::function<void (const Connection_ptr&)>;
 class Connection : public std::enable_shared_from_this<Connection>
 {
 public:
-	Connection(ip::tcp::socket s);
-	~Connection(){};
+	Connection(io_service& ios);
+	~Connection(){std::cout<<"~Connection"<<std::endl;};
 
     void Start();
 	void Stop();
@@ -47,7 +47,7 @@ private:
 
 	ip::tcp::socket						    m_socket;
 	std::string                             m_peeraddr;
-    Message                                 m_readmsg;
+    Message                                 m_message;
 	mutable std::mutex                      m_mutex;
 	std::list<Message>                      m_sendmsgqueue;
 	CloseCallback                           m_closecb;

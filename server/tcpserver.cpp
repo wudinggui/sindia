@@ -5,11 +5,10 @@
 #include "tcpserver.hpp"
 #include "spdlog/spdlog.h"
 
-namespace rpc {
+namespace sindia {
 
 TcpServer::TcpServer(const std::string& ipaddr, uint32_t port)
 	: m_work(m_service) 
-	, m_socket(m_service)
 	, m_endpoint(ip::address::from_string(ipaddr), port)
 	, m_acceptor(m_service, m_endpoint)
 
@@ -19,12 +18,36 @@ TcpServer::TcpServer(const std::string& ipaddr, uint32_t port)
 void TcpServer::Start()
 {
 	spdlog::get("console")->info("server gets start");
-
+	m_acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+	m_acceptor.listen();
     Accept();
 	m_runthread.reset(new std::thread([this]
     { 
         m_service.run(); 
     }));
+}
+
+void TcpServer::Accept()
+{
+	spdlog::get("console")->info("server accepting");
+	auto new_connection = std::make_shared<Connection>(m_service);
+	m_acceptor.async_accept(new_connection->Socket(), [this, new_connection](boost::system::error_code const& error)
+	{
+		if (!error)
+		{
+		    spdlog::get("console")->info("server accept new connection");
+			std::string peeraddr = new_connection->GetPeerAddress();
+            m_connmap[peeraddr] = new_connection;
+			new_connection->SetCloseCallback(std::bind(&TcpServer::CloseConn, this, std::placeholders::_1));
+			new_connection->Start();
+		}
+		else
+		{
+			spdlog::get("console")->info("server accept new connection error");
+		}
+
+		Accept();
+	});
 }
 
 void TcpServer::Stop()
@@ -48,43 +71,16 @@ void TcpServer::Stop()
 	}
 }
 
-void TcpServer::Accept()
-{
-	ip::tcp::socket conn_s(m_service);
-	auto new_connection = std::make_shared<Connection>(std::move(conn_s));
-
-	m_acceptor.async_accept(new_connection->Socket(), [this, new_connection](boost::system::error_code const&error)
-	{
-		if (!error)
-		{
-		    spdlog::get("console")->info("server accept new connection");
-			std::string peeraddr = new_connection->GetPeerAddress();
-            m_connmap[peeraddr] = new_connection;
-			new_connection->SetCloseCallback(std::bind(&TcpServer::CloseConn, this, std::placeholders::_1));
-			new_connection->Start();
-		}
-		else
-		{
-			spdlog::get("console")->info("server accept new connection error");
-		}
-
-		Accept();
-	});
-}
-
 void TcpServer::CloseConn(Connection_ptr conn)
 {
 	spdlog::get("console")->info("server close connection");
 
 	std::unique_lock<std::mutex> lock(m_mutex);
-	for (auto itr = m_connmap.begin(); itr != m_connmap.end(); ++itr)
-	{
-		if (itr->second.lock() == conn)
-		{
-			spdlog::get("console")->info("remove connection from map");
-			itr = m_connmap.erase(itr);
-		}
-	}
+	auto itr = m_connmap.find(conn->GetPeerAddress());
+	if (itr != m_connmap.end())
+    {
+         m_connmap.erase(itr);
+    }
 }
 
 }

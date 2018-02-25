@@ -10,17 +10,15 @@
 using namespace std;
 using namespace boost::asio;
 
-namespace rpc 
+namespace sindia 
 {
 class Connection;
 class TcpClient
 {
 public:
 	TcpClient(const std::string& ipaddr, uint32_t port);
-	~TcpClient(){};
+	~TcpClient(){std::cout << "~TcpClient" << std::endl;};
 	void Start();
-	ip::tcp::socket& Socket();
-	ip::tcp::endpoint const& Endpoint() const;
 private:
 	void StartConnect();
 	void HandleConnection(const boost::system::error_code& error);
@@ -30,7 +28,6 @@ private:
 private:
     io_service 					  m_service;
 	io_service::work              m_work;
-	ip::tcp::socket				  m_socket;
 	ip::tcp::endpoint			  m_endpoint;
 	std::atomic<bool>             m_isconnected;         
 

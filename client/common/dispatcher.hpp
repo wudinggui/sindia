@@ -12,7 +12,7 @@
 using namespace std;
 using namespace boost::asio;
 
-namespace rpc 
+namespace sindia 
 {
 class Dispatcher
 {
